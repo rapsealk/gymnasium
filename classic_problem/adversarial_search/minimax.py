@@ -30,3 +30,23 @@ def find_best_move(board: Board, max_depth: int = 8) -> Move:
             best_eval = result
             best_move = move
     return best_move
+
+
+def alphabeta(board: Board, maximizing: bool, original_player: Piece, max_depth: int = 8, alpha: float = float("-inf"), beta: float = float("inf")) -> float:
+    if board.is_done or board.is_draw or max_depth == 0:
+        return board.evaluate(original_player)
+
+    if maximizing:
+        for move in board.legal_moves:
+            result: float = alphabeta(board.move(move), False, original_player, max_depth-1, alpha, beta)
+            alpha = max(result, alpha)
+            if beta <= alpha:
+                break
+        return alpha
+    else:
+        for move in board.legal_moves:
+            result = alphabeta(board.move(move), True, original_player, max_depth-1, alpha, beta)
+            beta = min(result, beta)
+            if beta <= alpha:
+                break
+        return beta
