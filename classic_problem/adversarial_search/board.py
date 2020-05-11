@@ -19,7 +19,7 @@ class Board(ABC):
         ...
 
     @abstractmethod
-    def move(self, location: Move) -> Board:
+    def move(self, location: Move) -> "Board":
         ...
 
     @property
@@ -29,12 +29,12 @@ class Board(ABC):
 
     @property
     @abstractmethod
-    def is_win(self) -> bool:
+    def is_done(self) -> bool:
         ...
 
     @property
     def is_draw(self) -> bool:
-        return (not self.is_win) and (len(self.legal_moves) == 0)
+        return (not self.is_done) and (len(self.legal_moves) == 0)
 
     @abstractmethod
     def evaluate(self, player: Piece) -> float:
