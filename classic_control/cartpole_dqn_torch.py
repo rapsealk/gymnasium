@@ -36,7 +36,8 @@ def display_frames_as_gif(frames):
 
     anim = animation.FuncAnimation(plt.gcf(), lambda x: patch.set_data(frames[x]), frames=len(frames), interval=50)
 
-    anim.save('movie_cartpole_DQN.gif')
+    writer = animation.PillowWriter(fps=30)
+    anim.save('movie_cartpole_DQN.gif', writer=writer)
 
 
 def sample(memory, batch_size=BATCH_SIZE):
