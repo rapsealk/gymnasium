@@ -39,13 +39,13 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class RolloutStorage:
 
     def __init__(self, num_steps, num_processes, obs_shape):
-        self.observations = torch.zeros(num_steps+1, num_processes, 4)
-        self.masks = torch.ones(num_steps+1, num_processes, 1)
-        self.rewards = torch.zeros(num_steps, num_processes, 1)
-        self.actions = torch.zeros(num_steps, num_processes, 1).long()
+        self.observations = torch.zeros(num_steps+1, num_processes, 4).to(device)
+        self.masks = torch.ones(num_steps+1, num_processes, 1).to(device)
+        self.rewards = torch.zeros(num_steps, num_processes, 1).to(device)
+        self.actions = torch.zeros(num_steps, num_processes, 1).long().to(device)
 
         # 할인 총 보상 저장
-        self.returns = torch.zeros(num_steps+1, num_processes, 1)
+        self.returns = torch.zeros(num_steps+1, num_processes, 1).to(device)
         self.index = 0
 
     def insert(self, current_obs, action, reward, mask):
