@@ -8,7 +8,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from matplotlib import animation
 
-from dqn import ProbabilityDistribution
+from distribution import ProbabilityDistribution
 
 # TensorFlow CUDA GPU configuration
 physical_devices = tf.config.experimental.list_physical_devices("GPU")
@@ -18,10 +18,38 @@ for physical_device in physical_devices:
 ID = int(time.time() * 1000)
 
 
-class AdvancedActorCritic(tf.keras.Model):
+class Model(tf.keras.Model):
+    """Action-Navigation Architecture"""
+    def __init__(self, input_shape, n_outputs):
+        super(Model, self).__init__()
+
+        self.conv1 = tf.keras.layers.Conv2D(32, kernel_size=(8, 8), strides=(4, 4), input_shape=input_shape)
+        self.conv2 = tf.keras.layers.Conv2D(64, kernel_size=(4, 4), strides=(2, 2))
+        self.lstm = tf.keras.layers.LSTM(32, stateful=True)
+        self.dense = tf.keras.layers.Dense(n_outputs, activation='softmax')
+        self.value_head = tf.keras.layers.Dense(1)
+
+        self.prob = ProbabilityDistribution()
+
+    def call(self, inputs, training=False):
+        x = tf.keras.activations.relu(self.conv1(inputs))
+        x = tf.keras.activations.relu(self.conv2(x))
+        x = tf.keras.layers.Flatten()(x)
+        x = self.lstm(tf.expand_dims(x, axis=0))
+        logits = self.dense(x)
+        value = self.value_head(x)
+        return logits, value
+
+    def think(self, inputs):
+        logits, value = self(inputs.astype(np.float32))
+        return self.prob(logits), np.squeeze(value)
+
+
+"""
+class Model(tf.keras.Model):
 
     def __init__(self, input_shape, n_outputs):
-        super(AdvancedActorCritic, self).__init__()
+        super(Model, self).__init__()
         self.fc1 = tf.keras.layers.Dense(128, input_shape=input_shape)
         self.bn1 = tf.keras.layers.BatchNormalization()
         self.fc2 = tf.keras.layers.Dense(128)
@@ -44,6 +72,7 @@ class AdvancedActorCritic(tf.keras.Model):
         value = self.value_head(self.value_fc(x))
 
         return logits, value
+"""
 
 
 """BattleZone-ram-v0
@@ -98,10 +127,8 @@ class Agent:
         self.state_size = env.reset().shape
         self.action_size = env.action_space.n
 
-        self.model = AdvancedActorCritic(self.state_size, self.action_size)
+        self.model = Model(self.state_size, self.action_size)
         self.optimizer = tf.keras.optimizers.Adam(lr=self.lr)
-
-        self.prob = ProbabilityDistribution()
 
     def get_action(self, state):
         if np.random.random() > self.epsilon:
@@ -197,7 +224,7 @@ class Agent:
                     scores.append(score)
                     if best_score < score:
                         best_score = score
-                        save_gif(frames, path='', filename='%d.gif' % ID)
+                        # save_gif(frames, path='', filename='%d.gif' % ID)
                     score = 0
                     frames = []
 
@@ -257,5 +284,5 @@ def save_gif(frames, path='', filename='a.gif'):
 if __name__ == "__main__":
     # Best 100-episode average reward was 8330.00 ± 802.94.
     # Total runtime: 18h
-    env = gym.make('BattleZone-ram-v0')
+    env = gym.make('BattleZone-v0')
     Agent(env).run()
